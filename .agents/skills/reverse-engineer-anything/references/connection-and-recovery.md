@@ -36,6 +36,30 @@ as such; only actual REA output supplies REA Evidence.
 
 ## Repair registration when needed
 
+### Complete the same workflow, not three separate installations
+
+Keep these acceptance scopes distinct:
+
+1. Installation/configuration: files, dependencies, server registration and the
+   selected provider are ready. This does not prove any client connected.
+2. Independent transport: an SDK client initializes, lists tools and calls them.
+   This proves that client's connection only, not the current agent's.
+3. Active agent: after reconnecting, the current session discovers actual tools,
+   directly calls `binary_session`, and exercises the requested target workflow.
+   Check fresh identity, coverage and target cleanup before marking integration
+   complete for that scope. Do not equate this with every optional REA provider.
+
+If the tool is loaded but its target has exited, the missing prerequisite is the
+running target, not installation. Start it only within the owner's approved
+scope, then retry the affected operation without reinstalling or restarting the
+client. Report the exact outstanding gate and whether owner action is needed;
+do not repeat a generic "not complete" after the blocker has been resolved.
+
+For the fork's optional LLDB companion, follow `experiments/native-inspector/README.md`
+in the fork source checkout; the companion is not part of the installed skill bundle.
+Its verifier intentionally reports `active_agent_verified: false` and
+`integration_complete: false`; it cannot attest to another client's connection.
+
 For Codex:
 
 ```bash
