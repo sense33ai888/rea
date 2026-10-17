@@ -59,6 +59,18 @@ do not establish fewer tokens or faster analysis.
 
 ## Development
 
+### Installation completion gate
+
+Distinguish installed files, independent CLI/SDK transport tests, and the active
+agent connection. Never report complete agent integration from the first two.
+After registration/reconnection, discover the actual session tools and directly
+call `binary_session`, then the operations required by the requested workflow.
+Verify fresh target identity, coverage and cleanup before reporting completion.
+If tools are loaded but the target is not running, diagnose target readiness;
+do not repeat installation. Report exactly the remaining gate in one update.
+The optional native companion has a runnable transport verifier that deliberately
+leaves active-agent acceptance unverified; see its README.
+
 Use [.nvmrc](.nvmrc) and `package.json#packageManager` for the pinned toolchain. Cursor Cloud may place older Node.js first on `PATH`; environment setup installs the pinned toolchain under `/usr/local/bin`.
 
 - `npm ci`: install locked dependencies.

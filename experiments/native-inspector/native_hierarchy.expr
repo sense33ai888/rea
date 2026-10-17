@@ -1,0 +1,63 @@
+({
+  id (^number)(double) = ^id(double value) { return isfinite(value) ? @(value) : (id)[NSNull null]; };
+  __block NSUInteger count = 0;
+  __block BOOL truncated = NO;
+  NSMutableSet *seenLayers = [NSMutableSet set];
+  __block NSDictionary *(^layerTree)(CALayer *, NSUInteger);
+  layerTree = ^NSDictionary *(CALayer *l, NSUInteger depth) {
+    if (!l) return @{};
+    NSString *address = [NSString stringWithFormat:@"%p", l];
+    if ([seenLayers containsObject:address]) return @{ @"ref": address };
+    [seenLayers addObject:address];
+    if (depth > 64 || ++count > 8192) { truncated = YES; return @{}; }
+    NSMutableArray *children = [NSMutableArray array];
+    for (CALayer *child in l.sublayers) [children addObject:layerTree(child, depth + 1)];
+    return @{ @"class": NSStringFromClass(l.class), @"address": [NSString stringWithFormat:@"%p", l],
+      @"frame": NSStringFromRect(l.frame), @"bounds": NSStringFromRect(l.bounds),
+      @"cornerRadius": number(l.cornerRadius), @"masksToBounds": @(l.masksToBounds),
+      @"cornerCurve": l.cornerCurve, @"maskedCorners": @(l.maskedCorners),
+      @"opacity": number(l.opacity), @"hidden": @(l.hidden),
+      @"mask": layerTree(l.mask, depth + 1), @"children": children };
+  };
+  __block NSDictionary *(^viewTree)(NSView *, NSUInteger);
+  viewTree = ^NSDictionary *(NSView *v, NSUInteger depth) {
+    if (depth > 64 || ++count > 8192) { truncated = YES; return @{}; }
+    NSMutableArray *children = [NSMutableArray array];
+    for (NSView *child in v.subviews) [children addObject:viewTree(child, depth + 1)];
+    NSMutableDictionary *row = [@{ @"class": NSStringFromClass(v.class),
+      @"address": [NSString stringWithFormat:@"%p", v], @"frame": NSStringFromRect(v.frame),
+      @"bounds": NSStringFromRect(v.bounds), @"hidden": @(v.hidden),
+      @"windowRect": NSStringFromRect([v convertRect:v.bounds toView:nil]),
+      @"clipsToBounds": @(v.clipsToBounds),
+      @"alpha": number(v.alphaValue), @"wantsLayer": @(v.wantsLayer),
+      @"layer": layerTree(v.layer, 0), @"children": children } mutableCopy];
+    if ([v isKindOfClass:[NSVisualEffectView class]]) {
+      NSVisualEffectView *e = (NSVisualEffectView *)v;
+      row[@"effect"] = @{ @"material": @(e.material), @"blendingMode": @(e.blendingMode), @"state": @(e.state) };
+    }
+    if (@available(macOS 26.0, *)) {
+      if ([v isKindOfClass:[NSGlassEffectView class]]) {
+        NSGlassEffectView *g = (NSGlassEffectView *)v;
+        row[@"glass"] = @{ @"cornerRadius": number(g.cornerRadius),
+          @"cornerRadiusRaw": [NSString stringWithFormat:@"%g", g.cornerRadius],
+          @"style": @(g.style), @"tintPresent": @(g.tintColor != nil),
+          @"contentViewAddress": [NSString stringWithFormat:@"%p", g.contentView] };
+      }
+      if ([v isKindOfClass:[NSGlassEffectContainerView class]]) {
+        row[@"glassContainerSpacing"] = number(((NSGlassEffectContainerView *)v).spacing);
+      }
+    }
+    return row;
+  };
+  NSMutableArray *windows = [NSMutableArray array];
+  for (NSWindow *w in NSApp.windows) {
+    if (w.contentView && w.visible) [windows addObject:@{ @"class": NSStringFromClass(w.class),
+      @"frame": NSStringFromRect(w.frame), @"visible": @(w.visible),
+      @"content": viewTree(w.contentView.superview ?: w.contentView, 0) }];
+  }
+  NSData *data = [NSJSONSerialization dataWithJSONObject:@{ @"schema": @1, @"truncated": @(truncated),
+    @"visited": @(count), @"nonFiniteNumericValues": @"null", @"windows": windows } options:0 error:0];
+  viewTree = nil;
+  layerTree = nil;
+  [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+})

@@ -5,6 +5,11 @@
 
 # REA: Reverse Engineer Anything
 
+> This fork adds an opt-in macOS native hierarchy companion (see
+> `experiments/native-inspector/README.md` in this source checkout)
+> and an explicit active-agent acceptance gate. The companion is separate from
+> upstream REA, is not enabled by setup, and is not included in the npm package.
+
 ### One MCP for reverse engineering across binaries, applications, and runtime behavior.
 
 **See a feature you like. Understand how it works, down to the binary level.**

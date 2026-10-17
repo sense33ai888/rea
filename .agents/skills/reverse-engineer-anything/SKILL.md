@@ -54,8 +54,10 @@ availability have different remedies; avoid repeating setup for all of them.
    replacement in the reviewed plan. After approval, apply the same scope with
    `npx -y rea-agents@latest setup --client codex --yes`. Add `--install-hopper`
    only if that separate installation was needed and explicitly approved.
-4. Restart/reconnect the affected agent. Verify that REA tools actually appear
-   in the session, then resume the original investigation. If they remain
+4. Restart/reconnect the affected agent. Discover its actual REA tools and call
+   `binary_session` directly from that session, then verify the requested workflow
+   with its real target and cleanup. An independent CLI/SDK self-test cannot prove
+   the active agent connection. Report these gates separately. If tools remain
    absent, inspect the client's MCP launch error rather than repeating setup.
 
 REA setup never installs or upgrades Node.js, npm, Homebrew, Java, Ghidra, IDA,
